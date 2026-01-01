@@ -40,29 +40,6 @@ $env:PATH = "$mingw64;$mingw32;$msvc;$msvcarm;$msvc86" + $env:PATH
 
 cargo clean
 
-foreach ($target in $targetsWindows) {
-    Write-Host "Buduję Windows target: $target"
-
-    # Dla targetów MSVC ustawienie dodatkowe
-    if ($target -like "*msvc") {
-        # Uruchom w x64 Native Tools PowerShell jeśli trzeba
-        Write-Host "Używam MSVC toolchain dla $target"
-    }
-
-    cargo build --release --target $target
-
-    # Kopiowanie pliku do release_builds
-    $exeName = "$projectName.exe"
-    $src = "target\$target\release\$exeName"
-    $dst = "$outDir\$projectName-$target.exe"
-
-    if (Test-Path $src) {
-        Copy-Item $src $dst -Force
-        Write-Host "Skopiowano: $dst"
-    } else {
-        Write-Host "Nie znaleziono pliku: $src"
-    }
-}
 
 
 foreach ($target in $targetsLinux) {
@@ -92,6 +69,36 @@ foreach ($target in $targetsLinux) {
         Write-Host "Nie znaleziono pliku: $src"
     }
 }
+
+
+
+
+foreach ($target in $targetsWindows) {
+    Write-Host "Buduję Windows target: $target"
+
+    # Dla targetów MSVC ustawienie dodatkowe
+    if ($target -like "*msvc") {
+        # Uruchom w x64 Native Tools PowerShell jeśli trzeba
+        Write-Host "Używam MSVC toolchain dla $target"
+    }
+
+    cargo build --release --target $target
+
+    # Kopiowanie pliku do release_builds
+    $exeName = "$projectName.exe"
+    $src = "target\$target\release\$exeName"
+    $dst = "$outDir\$projectName-$target.exe"
+
+    if (Test-Path $src) {
+        Copy-Item $src $dst -Force
+        Write-Host "Skopiowano: $dst"
+    } else {
+        Write-Host "Nie znaleziono pliku: $src"
+    }
+}
+
+
+
 
 
 

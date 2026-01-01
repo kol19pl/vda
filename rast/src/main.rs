@@ -956,28 +956,29 @@ fn check_dependencies() {
         if !yt_installed {
             log_error("❌ yt-dlp nie jest zainstalowany lub nie jest w PATH");
 
-            print!("Chcesz pobrać yt-dlp automatycznie? (y/n): ");
-            io::stdout().flush().unwrap();
+           // print!("Chcesz pobrać yt-dlp automatycznie? (y/n): ");
+           // io::stdout().flush().unwrap();
 
-            let mut input = String::new();
-            io::stdin().read_line(&mut input).unwrap();
+          //  let mut input = String::new();
+          //  io::stdin().read_line(&mut input).unwrap();
 
-            if input.trim().eq_ignore_ascii_case("y") {
+          //  if input.trim().eq_ignore_ascii_case("y") {
                 log_info("📥 Pobieram yt-dlp...");
                 let url = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp";
                 let out_path = "./bin/yt-dlp";
-                std::fs::create_dir_all("./bin").unwrap();
+            std::fs::create_dir_all("./bin").expect("Nie udało się utworzyć katalogu ./bin");
 
-                let resp = reqwest::blocking::get(url).expect("Nie udało się pobrać yt-dlp");
+
+            let resp = reqwest::blocking::get(url).expect("Nie udało się pobrać yt-dlp");
                 let bytes = resp.bytes().expect("Błąd odczytu pobranego pliku");
                 std::fs::write(out_path, &bytes).expect("Nie udało się zapisać yt-dlp");
                 std::fs::set_permissions(out_path, std::fs::Permissions::from_mode(0o755))
                     .expect("Nie udało się nadać uprawnień wykonywalnych");
 
                 log_info("✅ yt-dlp został pobrany i zapisany w ./bin/yt-dlp");
-            } else {
-                log_error("❌ yt-dlp nie został zainstalowany. Pobieranie nie będzie działać.");
-            }
+          //  } else {
+            //    log_error("❌ yt-dlp nie został zainstalowany. Pobieranie nie będzie działać.");
+           // }
         } else {
             log_info("✅ yt-dlp jest dostępny");
         }
