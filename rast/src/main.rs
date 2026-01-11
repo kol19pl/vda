@@ -1,4 +1,6 @@
 mod build;
+mod models;
+mod setup;
 
 use actix_cors::Cors;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
@@ -18,7 +20,7 @@ use serde_json;
 use std::io::{self, Write};
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
-
+use crate::models::{DownloadParams, DownloadQueueItem, DownloadRequest, DownloadResponse, JobResult, StatusResponse, YtDlpStatus};
 
 static QUEUE_FILE: &str = "download_queue.json";
 
@@ -35,51 +37,9 @@ fn log_error(msg: &str) {
     eprintln!("{now} - ERROR - {msg}");
 }
 
-#[derive(Serialize, Clone)]
-struct StatusResponse {
-    status: &'static str,
-    version: &'static str,
-    timestamp: f64,
-    downloads_folder: String,
-}
 
-#[derive(Serialize, Clone)]
-struct YtDlpStatus {
-    installed: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    version: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<String>,
-    message: String,
-}
 
-#[derive(Deserialize, Clone)]
-struct DownloadRequest {
-    url: String,
-    #[serde(default)]
-    quality: Option<String>,
-    #[serde(default)]
-    format: Option<String>,
-    #[serde(default)]
-    subfolder: Option<String>,
-    #[serde(default)]
-    title: Option<String>,
-    #[serde(default)]
-    username: Option<String>,
-    #[serde(default)]
-    password: Option<String>,
-}
 
-#[derive(Serialize)]
-struct DownloadResponse {
-    success: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    message: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    output_path: Option<String>,
-}
 
 #[derive(Deserialize)]
 struct VerifyPremiumRequest {
@@ -98,26 +58,9 @@ struct VerifyPremiumResponse {
     error: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-struct DownloadQueueItem {
-    url: String,
-    quality: String,
-    format_selector: String,
-    subfolder: String,
-    title: Option<String>,
-    username: Option<String>,
-    password: Option<String>,
-}
 
 
 
-struct JobResult {
-    success: bool,
-    http_status: u16,
-    message: Option<String>,
-    error: Option<String>,
-    output_path: Option<String>,
-}
 
 struct DownloadJob {
     id: u64,
@@ -125,16 +68,7 @@ struct DownloadJob {
     resp_tx: oneshot::Sender<JobResult>,
 }
 
-#[derive(Clone)]
-struct DownloadParams {
-    url: String,
-    quality: String,
-    format_selector: String,
-    output_path: PathBuf,
-    custom_title: Option<String>,
-    username: Option<String>,
-    password: Option<String>,
-}
+
 
 static YTDLP_PATH: Lazy<String> = Lazy::new(|| {
     if cfg!(target_os = "linux") && !Command::new("yt-dlp").output().is_ok() {
@@ -166,55 +100,7 @@ fn current_unix_time_f64() -> f64 {
     now.as_secs() as f64 + f64::from(now.subsec_nanos()) / 1_000_000_000.0
 }
 
-fn check_ytdlp_once() -> &'static YtDlpStatus {
-    YTDLP_STATUS.get_or_init(|| {
-        log_info("Sprawdzam yt-dlp w PATH i ./bin...");
 
-        // Lista możliwych lokalizacji
-        let candidates = [
-            "yt-dlp",
-            "./bin/yt-dlp",
-            #[cfg(target_os = "windows")]
-            "yt-dlp.exe",
-            #[cfg(target_os = "windows")]
-            ".\\bin\\yt-dlp.exe",
-        ];
-
-        for cmd in candidates.iter() {
-            match Command::new(cmd)
-                .arg("--version")
-                .stdout(Stdio::piped())
-                .stderr(Stdio::null())
-                .output()
-            {
-                Ok(out) if out.status.success() => {
-                    let ver = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                    log_info(&format!("✅ yt-dlp jest zainstalowany: {} (komenda: {})", ver, cmd));
-                    return YtDlpStatus {
-                        installed: true,
-                        version: Some(ver.clone()),
-                        error: None,
-                        message: format!("yt-dlp wersja {} jest zainstalowany ({})", ver, cmd),
-                    };
-                }
-                Ok(_) => {
-                    log_error(&format!("⚠️ yt-dlp istnieje, ale nie działa poprawnie: {}", cmd));
-                }
-                Err(_) => {
-                    log_info(&format!("⚠️ nie znaleziono yt-dlp w: {}", cmd));
-                }
-            }
-        }
-
-        log_error("⚠️ yt-dlp nie jest zainstalowany w PATH ani ./bin");
-        YtDlpStatus {
-            installed: false,
-            version: None,
-            error: Some("not_found".into()),
-            message: "yt-dlp nie jest zainstalowany".into(),
-        }
-    })
-}
 
 
 fn clean_filename(title: &str) -> String {
@@ -264,9 +150,11 @@ async fn status_handler() -> impl Responder {
 }
 
 async fn check_ytdlp_handler() -> impl Responder {
-    let st = check_ytdlp_once().clone();
+    let st = setup::check_ytdlp_once().clone();
     HttpResponse::Ok().json(st)
 }
+
+
 
 async fn download_handler(
     body: web::Json<DownloadRequest>,
@@ -280,6 +168,7 @@ async fn download_handler(
             message: None,
             error: Some("URL jest wymagany".into()),
             output_path: None,
+            id: None,
         });
     }
 
@@ -290,39 +179,26 @@ async fn download_handler(
     let custom_title = data.title;
     let username = data.username;
     let password = data.password;
-    let has_premium = username.is_some() && password.is_some();
-
-    log_info("📥 Otrzymano żądanie pobierania:");
-    log_info(&format!("   URL: {url}"));
-    log_info(&format!("   Jakość: {quality}"));
-    log_info(&format!("   Format: {format_selector}"));
-
-    if has_premium {
-        if let Some(u) = &username {
-            log_info(&format!("👑 Pobieranie Premium dla użytkownika: {u} (hasło: ****)"));
-        }
-    }
 
     let mut base_path = PathBuf::from(downloads_folder());
     if !subfolder.is_empty() {
         base_path.push(&subfolder);
-        log_info(&format!("📂 Używam podfolderu: {}", base_path.to_string_lossy()));
     }
-    log_info(&format!(
-        "📁 Folder docelowy: {}",
-        base_path.to_string_lossy()
-    ));
-
     if let Err(e) = fs::create_dir_all(&base_path) {
         let msg = format!("Nie udało się utworzyć folderu: {e}");
-        log_error(&msg);
         return HttpResponse::InternalServerError().json(DownloadResponse {
             success: false,
             message: None,
             error: Some(msg),
             output_path: None,
+            id: None,
         });
     }
+
+    let job_id = app_state
+        .job_counter
+        .fetch_add(1, Ordering::SeqCst)
+        .wrapping_add(1);
 
     let params = DownloadParams {
         url: url.clone(),
@@ -334,14 +210,17 @@ async fn download_handler(
         password: password.clone(),
     };
 
+    let title = custom_title.clone().unwrap_or_else(|| "Unknown Title".into());
+    
     let queue_item = DownloadQueueItem {
-        url,
-        quality,
-        format_selector,
-        subfolder,
-        title: custom_title,
-        username,
-        password,
+        id: job_id,                   // unikalne ID zadania
+        url: url.clone(),             // adres URL wideo
+        quality: quality.clone(),     // wybrana jakość
+        format_selector: format_selector.clone(), // format wideo
+        subfolder: subfolder.clone(), // ewentualny podfolder w folderze pobierania
+        title: Some(title),           // tytuł wideo w polu `title`
+        username: username.clone(),   // opcjonalne dane premium
+        password: password.clone(),   // opcjonalne dane premium
     };
 
 
@@ -351,12 +230,7 @@ async fn download_handler(
         save_queue_to_file(&queue);
     }
 
-    let job_id = app_state
-        .job_counter
-        .fetch_add(1, Ordering::SeqCst)
-        .wrapping_add(1);
-
-    let (resp_tx, resp_rx) = oneshot::channel::<JobResult>();
+    let (resp_tx, _resp_rx) = oneshot::channel::<JobResult>();
 
     let job = DownloadJob {
         id: job_id,
@@ -364,56 +238,28 @@ async fn download_handler(
         resp_tx,
     };
 
+    // Dodajemy zadanie do kolejki w tle
     if let Err(e) = app_state.job_sender.send(job).await {
         let msg = format!("Nie udało się dodać zadania do kolejki: {e}");
-        log_error(&msg);
         return HttpResponse::InternalServerError().json(DownloadResponse {
             success: false,
             message: None,
             error: Some("Nie udało się dodać zadania do kolejki".into()),
             output_path: None,
+            id: None,
         });
     }
 
-    let queue_pos = QUEUE_LEN.fetch_add(1, Ordering::SeqCst) + 1;
-    log_info(&format!(
-        "📥 Dodano pobieranie #{job_id} do kolejki (pozycja: {queue_pos})"
-    ));
-
-    match resp_rx.await {
-        Ok(res) => {
-            QUEUE_LEN.fetch_sub(1, Ordering::SeqCst);
-            if res.success {
-                HttpResponse::Ok().json(DownloadResponse {
-                    success: true,
-                    message: res.message,
-                    error: None,
-                    output_path: res.output_path,
-                })
-            } else {
-                let status = res.http_status;
-                HttpResponse::build(actix_web::http::StatusCode::from_u16(status).unwrap_or(actix_web::http::StatusCode::INTERNAL_SERVER_ERROR))
-                    .json(DownloadResponse {
-                        success: false,
-                        message: res.message,
-                        error: res.error,
-                        output_path: res.output_path,
-                    })
-            }
-        }
-        Err(_) => {
-            QUEUE_LEN.fetch_sub(1, Ordering::SeqCst);
-            let msg = "Błąd kolejki pobierania (kanał przerwany)".to_string();
-            log_error(&msg);
-            HttpResponse::InternalServerError().json(DownloadResponse {
-                success: false,
-                message: None,
-                error: Some(msg),
-                output_path: None,
-            })
-        }
-    }
+    // Od razu zwracamy odpowiedź do frontendu, że zadanie dodano
+    HttpResponse::Ok().json(DownloadResponse {
+        success: true,
+        message: Some("Dodano do kolejki".into()),
+        error: None,
+        output_path: None,
+        id: Some(job_id),
+    })
 }
+
 
 async fn verify_premium_handler(body: web::Json<VerifyPremiumRequest>) -> impl Responder {
     let username = match &body.username {
@@ -850,15 +696,16 @@ async fn download_worker_loop(
         let params = job.params.clone();
         let res = run_download_and_convert(&params, id);
 
-        if job.resp_tx.send(res).is_err() {
-            log_error(&format!(
-                "❌ Błąd wątku pobierania #{id}: nie udało się odesłać wyniku"
-            ));
-        }
+       // if job.resp_tx.send(res).is_err() {
+       //     log_error(&format!(
+       //         "❌ Błąd wątku pobierania #{id}: nie udało się odesłać wyniku"
+       //     ));
+       // }
 
         // Usuwanie z kolejki po zakończeniu
         let mut queue = app_state.queue.lock().unwrap();
-        queue.retain(|item| item.url != job.params.url);
+        // queue.retain(|item| item.url != job.params.url);
+        queue.retain(|item| item.id != id);
         save_queue_to_file(&queue);
     }
 }
@@ -899,7 +746,7 @@ async fn main() -> std::io::Result<()> {
         log_info("Włączono tryb verbose");
     }
 
-    check_dependencies();
+    setup::check_dependencies();
 
     let downloads = downloads_folder();
     log_info(&format!(
@@ -907,7 +754,7 @@ async fn main() -> std::io::Result<()> {
     ));
     log_info(&format!("📁 Folder pobierania: {downloads}"));
 
-    let _ = check_ytdlp_once();
+    let _ = setup::check_ytdlp_once();
 
     let (tx, rx) = mpsc::channel::<DownloadJob>(100);
 
@@ -938,6 +785,7 @@ async fn main() -> std::io::Result<()> {
             )
             .route("/status", web::get().to(status_handler))
             .route("/check-ytdlp", web::get().to(check_ytdlp_handler))
+            .route("/queue", web::get().to(queue_handler))
             .route("/download", web::post().to(download_handler))
             .route("/verify-premium", web::post().to(verify_premium_handler))
     })
@@ -948,51 +796,13 @@ async fn main() -> std::io::Result<()> {
 
 
 
-fn check_dependencies() {
-    #[cfg(target_os = "linux")]
-    {
-        log_info("🔍 Sprawdzam dostępność yt-dlp i ffmpeg na Linuxie...");
-
-        // Sprawdzenie yt-dlp
-        let yt_installed = Command::new("yt-dlp").arg("--version").output().is_ok();
-        if !yt_installed {
-            log_error("❌ yt-dlp nie jest zainstalowany lub nie jest w PATH");
-
-           // print!("Chcesz pobrać yt-dlp automatycznie? (y/n): ");
-           // io::stdout().flush().unwrap();
-
-          //  let mut input = String::new();
-          //  io::stdin().read_line(&mut input).unwrap();
-
-          //  if input.trim().eq_ignore_ascii_case("y") {
-                log_info("📥 Pobieram yt-dlp...");
-                let url = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp";
-                let out_path = "./bin/yt-dlp";
-            std::fs::create_dir_all("./bin").expect("Nie udało się utworzyć katalogu ./bin");
-
-
-            let resp = reqwest::blocking::get(url).expect("Nie udało się pobrać yt-dlp");
-                let bytes = resp.bytes().expect("Błąd odczytu pobranego pliku");
-                std::fs::write(out_path, &bytes).expect("Nie udało się zapisać yt-dlp");
-                std::fs::set_permissions(out_path, std::fs::Permissions::from_mode(0o755))
-                    .expect("Nie udało się nadać uprawnień wykonywalnych");
-
-                log_info("✅ yt-dlp został pobrany i zapisany w ./bin/yt-dlp");
-          //  } else {
-            //    log_error("❌ yt-dlp nie został zainstalowany. Pobieranie nie będzie działać.");
-           // }
-        } else {
-            log_info("✅ yt-dlp jest dostępny");
-        }
-
-        // Sprawdzenie ffmpeg
-        if Command::new("ffmpeg").arg("-version").output().is_err() {
-            log_error("❌ ffmpeg nie jest zainstalowany lub nie jest w PATH");
-        } else {
-            log_info("✅ ffmpeg jest dostępny");
-        }
-    }
+async fn queue_handler(app_state: web::Data<AppState>) -> impl Responder {
+    let queue = app_state.queue.lock().unwrap();
+    HttpResponse::Ok().json(&*queue)
 }
+
+
+
 
 #[cfg(target_family = "unix")]
 

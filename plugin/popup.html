@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Download Assistant</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Main Download Interface -->
+        <div id="main-view" class="view active">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <div class="logo">📥</div>
+                    <h1 id="app-title">Video Download Assistant</h1>
+                </div>
+                <div class="header-actions">
+                    <button id="queue-btn" class="icon-btn" title="Downloads">📄</button>
+                    <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+                </div>
+            </div>
+
+            <!-- Server Status -->
+            <div class="status-bar">
+                <div class="status-item">
+                    <span id="server-status-label">Server Status:</span>
+                    <span id="server-status" class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span id="status-text">Checking...</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Video Info -->
+            <div class="video-section">
+                <div class="video-info">
+                    <div class="video-thumbnail">
+                        <img id="video-thumbnail" src="" alt="Thumbnail" style="display: none;">
+                        <div id="thumbnail-placeholder" class="thumbnail-placeholder">🎬</div>
+                    </div>
+                    <div class="video-details">
+                        <div class="video-title-section">
+                            <label id="video-title-label">Video Title:</label>
+                            <div id="video-title" class="video-title">Loading...</div>
+                        </div>
+                        <div class="video-url">
+                            <span id="current-url"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Download Options -->
+            <div class="download-section">
+                <div class="quality-selector">
+                    <label id="quality-label">Quality:</label>
+                    <select id="quality-select">
+                        <option value="best">Best Quality (1440p/1080p)</option>
+                        <option value="best[height<=720]">HD 720p or lower</option>
+                        <option value="best[height<=480]">SD 480p or lower</option>
+                        <option value="worst">Lowest Quality</option>
+                        <option value="bestaudio">Audio Only (High Quality)</option>
+                    </select>
+                </div>
+
+                <div class="format-selector">
+                    <label for="format-select">Format:</label>
+                    <select id="format-select">
+                        <option value="mp4">MP4</option>
+                        <option value="mkv">MKV</option>
+                        <option value="webm">WebM</option>
+                        <option value="mp3">MP3 (Audio)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Download Button -->
+            <div class="action-section">
+                <button id="download-btn" class="download-btn">
+                    <span id="download-btn-text">Download Video</span>
+                    <div id="download-spinner" class="spinner" style="display: none;"></div>
+                </button>
+            </div>
+
+            <!-- Download Status -->
+            <div id="download-status" class="download-status" style="display: none;">
+                <div class="status-message">
+                    <span id="status-message-text"></span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Queue View -->
+<div id="queue-view" class="view">
+    <div class="header">
+        <div class="header-left">
+            <button id="queue-back-btn" class="icon-btn">←</button>
+            <h1>Pobierane</h1>
+        </div>
+    </div>
+
+    <div class="queue-content">
+        <table class="queue-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>URL</th>
+                    <th>Quality</th>
+                    <th>Format</th>
+                </tr>
+            </thead>
+            <tbody id="queue-list">
+                <tr>
+                    <td colspan="5">Ładowanie kolejki…</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+        <!-- Settings View -->
+        <div id="settings-view" class="view">
+            <div class="header">
+                <div class="header-left">
+                    <button id="back-btn" class="icon-btn">←</button>
+                    <h1 id="settings-title">Settings</h1>
+                </div>
+            </div>
+
+            <div class="settings-content">
+                <div class="setting-group">
+                    <label id="language-label">Language:</label>
+                    <select id="language-select">
+                        <option value="en">English</option>
+                        <option value="pl">Polski</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label id="server-port-label">Server Port:</label>
+                    <input type="number" id="server-port-input" min="1" max="65535" value="8080">
+                </div>
+
+                <div class="setting-group">
+             
+                    <label id="server-ip-label">Server IP:</label>
+                     <input
+                         type="text"
+                         id="serveripinput"
+                         placeholder="127.0.0.1"
+                         value="127.0.0.1"
+    >
+                 </div>
+
+
+                <div class="setting-group">
+                    <label id="download-folder-label">Download Folder:</label>
+                    <input type="text" id="download-folder-input" value="Downloads">
+                </div>
+
+                <div class="ytdlp-status">
+                    <div class="status-item">
+                        <span id="ytdlp-status-label">yt-dlp Status:</span>
+                        <span id="ytdlp-status" class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span id="ytdlp-status-text">Checking...</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button id="save-settings-btn" class="primary-btn">Save</button>
+                    <button id="cancel-settings-btn" class="secondary-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+</body>
+</html>

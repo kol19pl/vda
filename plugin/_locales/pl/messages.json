@@ -1,0 +1,116 @@
+{
+  "extensionName": {
+    "message": "Video Download Assistant"
+  },
+  "extensionDescription": {
+    "message": "Pobieraj filmy z dowolnej strony używając yt-dlp"
+  },
+  "downloadVideo": {
+    "message": "Pobierz"
+  },
+  "videoTitle": {
+    "message": "Tytuł Filmu:"
+  },
+  "quality": {
+    "message": "Jakość:"
+  },
+  "serverStatus": {
+    "message": "Status Serwera:"
+  },
+  "connected": {
+    "message": "Połączony"
+  },
+  "disconnected": {
+    "message": "Rozłączony"
+  },
+  "checking": {
+    "message": "Sprawdzanie..."
+  },
+  "downloading": {
+    "message": "Pobieranie..."
+  },
+  "downloadComplete": {
+    "message": "Sprawdź lokalny serwer"
+  },
+  "downloadFailed": {
+    "message": "Pobieranie Nieudane"
+  },
+  "settings": {
+    "message": "Ustawienia"
+  },
+  "language": {
+    "message": "Język:"
+  },
+  "serverPort": {
+    "message": "Port Serwera:"
+  },
+  "downloadFolder": {
+    "message": "Folder Pobierania:"
+  },
+  "ytDlpStatus": {
+    "message": "Status yt-dlp:"
+  },
+  "ytDlpNotInstalled": {
+    "message": "yt-dlp nie jest zainstalowany"
+  },
+  "ytDlpInstalled": {
+    "message": "yt-dlp jest zainstalowany"
+  },
+  "checkingYtDlp": {
+    "message": "Sprawdzanie yt-dlp..."
+  },
+  "serverNotRunning": {
+    "message": "Serwer nie działa. Uruchom lokalny serwer."
+  },
+  "unknownError": {
+    "message": "Wystąpił nieznany błąd"
+  },
+  "save": {
+    "message": "Zapisz"
+  },
+  "cancel": {
+    "message": "Anuluj"
+  },
+  "close": {
+    "message": "Zamknij"
+  },
+  "bestQuality": {
+    "message": "Najlepsza Jakość (1440p/1080p)"
+  },
+  "hd720Quality": {
+    "message": "HD 720p lub niższa"
+  },
+  "sd480Quality": {
+    "message": "SD 480p lub niższa"
+  },
+  "lowestQuality": {
+    "message": "Najniższa Jakość"
+  },
+  "audioOnly": {
+    "message": "Tylko Audio (Wysoka Jakość)"
+  },
+  "audioMp3": {
+    "message": "MP3 (Audio)"
+  },
+  "playlistDetected": {
+    "message": "Wykryto Playlistę!"
+  },
+  "playlistVideosCount": {
+    "message": "filmów w playliście"
+  },
+  "playlistCountUnknown": {
+    "message": "Wykryto playlistę (liczba nieznana)"
+  },
+  "downloadEntirePlaylist": {
+    "message": "Pobierz całą playlistę"
+  },
+  "numberFiles": {
+    "message": "Numeruj pliki (001_, 002_, itd.)"
+  },
+  "reverseOrder": {
+    "message": "Pobieraj w odwrotnej kolejności"
+  },
+  "playlistDownloadStarted": {
+    "message": "Pobieranie playlisty rozpoczęte!"
+  }
+}
