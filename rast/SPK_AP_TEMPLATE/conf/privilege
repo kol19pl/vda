@@ -1,0 +1,7 @@
+{
+  "defaults": {
+    "run-as": "package"
+  },
+  "username": "vda_serwer",
+  "groupname": "synocommunity"
+}

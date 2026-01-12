@@ -8,7 +8,9 @@ $targetsWindows = @(
 
 #rustup target list
 $targetsLinux = @(
+    "x86_64-unknown-linux-musl",
     "x86_64-unknown-linux-gnu"
+    #"aarch64-unknown-linux-musl"
     #"i686-unknown-linux-gnu",
     #"aarch64-unknown-linux-gnu",
     #"arm-unknown-linux-gnueabi",
@@ -98,9 +100,7 @@ foreach ($target in $targetsWindows) {
 }
 
 
-
-
-
+cargo clean
 
 
 Write-Host "Build zakonczony. Wszystkie pliki w folderze: $outDir"

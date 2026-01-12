@@ -1,0 +1,8 @@
+<Wizard>
+    <Step id="step1" title="Konfiguracja folderu">
+        <Field id="download_dir" type="folder" label="Folder pobierania">
+            <Default>/volume1/Download/vda_serwer</Default>
+            <Help>Wybierz folder, w którym aplikacja będzie zapisywać pobrane pliki</Help>
+        </Field>
+    </Step>
+</Wizard>

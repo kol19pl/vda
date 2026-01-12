@@ -1,0 +1,86 @@
+#!/bin/sh
+
+PKG_NAME="vda_serwer"
+PKG_DIR="/var/packages/$PKG_NAME"
+BIN="$PKG_DIR/target/vda_server-x86_64-unknown-linux-musl"
+VAR_DIR="$PKG_DIR/var"
+
+PID_FILE="$VAR_DIR/$PKG_NAME.pid"
+LOG_FILE="$VAR_DIR/$PKG_NAME.log"
+CONF_FILE="$VAR_DIR/config.env"
+
+mkdir -p "$VAR_DIR"
+
+# Wczytaj konfigurację, jeśli istnieje
+if [ -f "$CONF_FILE" ]; then
+    . "$CONF_FILE"
+fi
+
+# Domyślne wartości (fallback)
+DOWNLOAD_DIR="${DOWNLOAD_DIR:-/volume1/vda_serwer}"
+PORT="${PORT:-8080}"
+VERBOSE="${VERBOSE:-0}"
+
+# Rust / random
+export RUST_RANDOM_SEED=urandom
+export RNG_SEED_DEVICE=/dev/urandom
+export OPENSSL_CONF=/etc/ssl/openssl.cnf
+
+# Python dla yt-dlp
+PYTHON="/var/packages/python312/target/bin/python3"
+export PYTHON
+export PYTHONPATH=""
+export YTDLP_PYTHON="$PYTHON"
+export PATH="$(dirname "$PYTHON"):$PKG_DIR/target/bin:$PATH"
+
+# FFMPEG
+FFMPEG="/var/packages/ffmpeg7/target/bin/ffmpeg7"
+export FFMPEG
+export FFMPEG_BIN="$FFMPEG"
+
+
+# Funkcje start/stop/status
+start() {
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        echo "$PKG_NAME already running"
+        return 0
+    fi
+
+    echo "Starting $PKG_NAME"
+    echo "→ download dir: $DOWNLOAD_DIR"
+    echo "→ port: $PORT"
+
+    ARGS="--port $PORT --download-dir $DOWNLOAD_DIR"
+
+    [ "$VERBOSE" = "1" ] && ARGS="$ARGS --verbose"
+
+    "$BIN" $ARGS >> "$LOG_FILE" 2>&1 &
+    echo $! > "$PID_FILE"
+}
+
+stop() {
+    if [ -f "$PID_FILE" ]; then
+        kill "$(cat "$PID_FILE")" 2>/dev/null
+        rm -f "$PID_FILE"
+        echo "Stopped $PKG_NAME"
+    else
+        echo "$PKG_NAME not running"
+    fi
+}
+
+status() {
+    if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
+        exit 0
+    else
+        exit 1
+    fi
+}
+
+case "$1" in
+    start) start ;;
+    stop) stop ;;
+    status) status ;;
+    *) echo "Usage: $0 {start|stop|status}" ; exit 1 ;;
+esac
+
+exit 0

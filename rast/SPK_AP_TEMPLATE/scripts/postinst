@@ -1,0 +1,47 @@
+#!/bin/sh
+PKG_NAME="vda_serwer"
+BIN_DIR="/var/packages/$PKG_NAME/target/bin"
+
+# Tworzymy symlink
+#ln -sf "$BIN_DIR/vda_server-x86_64-unknown-linux-musl" "$BIN_DIR/vda_server"
+
+# Gdzie będą trzymane dane współdzielone dla pakietu
+PkgShare="/volume1/vda_serwer"
+
+# Gdzie będą trzymane dane aplikacji w tym pakiecie
+PkgHome="$PkgShare/AppData"
+
+# Tworzymy katalogi, jeśli nie istnieją
+mkdir -p "$PkgHome/vda_serwer"
+
+# Ustawiamy właściciela i uprawnienia dla pakietu
+# Jeśli Twój pakiet ma użytkownika systemowego "vda_serwer"
+#chown -R vda_serwer:users "$PkgShare"
+#chmod 755 "$PkgShare" -R
+
+# Tworzymy domyślny plik Preferences.xml jeśli go nie ma
+if [ ! -f "$PkgHome/vda_serwer/Preferences.xml" ]; then
+    cat > "$PkgHome/vda_serwer/Preferences.xml" <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<Preferences/>
+EOF
+fi
+
+# Tworzymy config.json do przechowywania ścieżki download folderu
+# Jeśli masz wizard z DSM 7, użyj wizard_download_dir
+USER_FOLDER="${wizard_download_dir:-$PkgShare}"
+
+VAR_DIR="/var/packages/$PKG_NAME/var"
+mkdir -p "$VAR_DIR"
+echo "{ \"download_dir\": \"$USER_FOLDER\" }" > "$VAR_DIR/config.json"
+#chmod 644 "$VAR_DIR/config.json"
+
+# Tworzymy katalog tmp dla ffmpeg
+TMP_DIR="$VAR_DIR/tmp"
+mkdir -p "$TMP_DIR"
+chown -R vda_serwer:users "$TMP_DIR"
+chmod 755 "$TMP_DIR"
+
+exit 0
+
+

@@ -1,0 +1,12 @@
+{
+  "video-driver": {},
+  "data-share": {
+		"shares": [{
+			"name": "vda_serwer",
+			"permission": {
+				"rw": ["vda_serwer"]
+			}
+		}],
+		"once": "false"
+	}
+}

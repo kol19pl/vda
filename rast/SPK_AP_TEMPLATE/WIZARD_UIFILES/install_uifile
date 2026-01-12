@@ -1,0 +1,26 @@
+[
+  {
+    "step_title": "Important information",
+    "items": [
+      {
+        "desc": "Permissions for the package are managed by a system internal user named <b>vda_serwer</b>. Please ensure it has proper access rights."
+      },
+      {
+        "desc": "This package requires a folder to store downloaded files. You will select it in the next step."
+      }
+    ]
+  },
+  {
+    "step_title": "Folder pobierania",
+    "items": [
+      {
+       "id": "download_dir",
+       "type": "path",
+       "pathType": "volume",
+       "label": "Folder pobierania",
+       "default": "/volume1/Download/vda_serwer",
+       "help": "Wybierz folder, w którym aplikacja będzie zapisywać pobrane pliki"
+      }
+    ]
+  }
+]
