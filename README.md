@@ -1,15 +1,22 @@
-vda-Video Download Assistan jaest portem serwera CDA Auto downloader autora Slayter   przepisanym z pythona na rast z powodu problemów z uruchomieniem na pewnym starym sprzencie i niudy oraz nadmiaru alkocholu.
-Projekt zmienia od orginału (wersi której był bazowany "2.0") 
-+Możliwość zmiany portu oraz działania nie tylko na localchost
-+Mozliwość (domyślnie) yt-dlp sejf-contejnet czyli działa bez potrzeby zwracania uwagi jaka wersja pytchona jest zainstalowana na systemie.
-Jeśli w systemie juz jest odpowiednia wersja pytchona i yt-dlp urzyje jej
-+Nadal wymaga FFmpeg zainstalowanego w systemie ale zostały dodane metody które rozwionzują problem przy znajdowaniu starej wersji np na Synology DSM
-+Projekt jest przygotowywany do pracy 24h na synology dsm (Trwają prace) (pobieranie yt zakończy się błędem łonczenia wymagany dalszy rozwój obsługi różnych formatów)
-Wsparcie dla systemów:
-Windows 11 (aktywnie urzytkowany przez autora)
-Windows 10 (wersja gnu)
-Windows xp oneCore 
-Linux-gnu  (nie testowany)
-Linux-musl (aktywnie urzytkowany przez autora)
-Synology DSM 7 (aktywnie urzytkowany przez autora)
-Bildy na inne platformy mogą się pojawić w relese ane nie są testowane.
+vda – Video Download Assistant (Rust Edition)
+
+Opis:  
+vda to port oryginalnego projektu autora *Slayter* (Python) do Rust, stworzony z myślą o stabilnym działaniu na starszym sprzęcie i systemach takich jak Synology DSM. Projekt rozwija funkcjonalność wersji bazowej 2.0 i umożliwia pracę 24h na różnych platformach.
+
+Co nowego:  
+- Możliwość zmiany portu serwera i działania nie tylko na localhost.  
+  - Jeśli wybrany port jest zajęty, serwer automatycznie próbuje kolejne porty aż do 10 prób.  
+- Obsługa yt-dlp w safe-container, działa niezależnie od wersji Pythona w systemie, ale jeśli Python i yt-dlp są obecne, użyje ich.  
+- Wsparcie dla FFmpeg z dodatkowymi metodami, aby odnaleźć stare wersje w systemie (np. na Synology DSM).  
+- Binarki przygotowane dla wielu systemów, w tym Linux MUSL (Synology ARM/Intel), Windows (MSVC/GNU), macOS, z nazwami platform w pliku.
+
+Obsługiwane systemy (testowane przez autora):  
+- Windows 11 (aktywnie używany)  
+- Windows 10 (GNU, testowane)  
+- Linux MUSL (aktywnie używany)  
+- Synology DSM 7 (aktywnie używany)  
+
+> Inne platformy mogą być dostępne, ale nie są testowane.
+
+Aktułanie pracuje nad gui pod synology oraz przepisaniem pluginu aby mugł sterować serwerem z jego pozimu
+
