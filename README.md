@@ -1,4 +1,4 @@
-vda-Video Download Assistan jaest portem serwera CDA Auto downloader autora Slayter   przepisanym z pythona na rast z powodu problemów z uruchomieniem na pewnym starym sprzencie.
+vda-Video Download Assistan jaest portem serwera CDA Auto downloader autora Slayter   przepisanym z pythona na rast z powodu problemów z uruchomieniem na pewnym starym sprzencie i niudy oraz nadmiaru alkocholu.
 Projekt zmienia od orginału (wersi której był bazowany "2.0") 
 +Możliwość zmiany portu oraz działania nie tylko na localchost
 +Mozliwość (domyślnie) yt-dlp sejf-contejnet czyli działa bez potrzeby zwracania uwagi jaka wersja pytchona jest zainstalowana na systemie.
