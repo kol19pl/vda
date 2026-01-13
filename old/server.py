@@ -176,7 +176,7 @@ class VideoDownloadHandler(BaseHTTPRequestHandler):
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         
-        if path == '/_status':
+        if path == '/status':
             self._handle_status()
         elif path == '/check-ytdlp':
             self._handle_check_ytdlp()
@@ -199,14 +199,14 @@ class VideoDownloadHandler(BaseHTTPRequestHandler):
         """Sprawdź czy serwer działa"""
         downloads_folder = os.environ.get('VDA_DOWNLOADS_FOLDER', os.path.join(os.path.expanduser("~"), "Downloads"))
         self._send_json_response({
-            '_status': 'running',
+            'status': 'running',
             'version': '1.0.0',
             'timestamp': time.time(),
             'downloads_folder': downloads_folder
         })
 
     def _handle_check_ytdlp(self):
-        """Zwróć cached _status yt-dlp"""
+        """Zwróć cached status yt-dlp"""
         try:
             global YTDLP_STATUS
             if YTDLP_STATUS is None:
@@ -293,8 +293,8 @@ class VideoDownloadHandler(BaseHTTPRequestHandler):
                     send_to_gui("⚠️ Uwaga: Status Premium zostanie sprawdzony podczas próby pobrania filmu Premium")
                     self._send_json_response({
                         'success': True,
-                        'is_premium': None,  # Nieznane - wymaga testu na filmie Premium
-                        'message': 'Dane logowania poprawne (_status Premium nieznany)'
+                        'isPremium': None,  # Nieznane - wymaga testu na filmie Premium
+                        'message': 'Dane logowania poprawne (status Premium nieznany)'
                     })
                 else:
                     error_msg = f"❌ Nieprawidłowe dane logowania"
