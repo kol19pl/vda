@@ -111,6 +111,7 @@ jobs:
           DST="${BIN_NAME}-${{ matrix.target }}${EXT}"
 
           cp "$SRC" "$DST"
+          chmod a+x "$DST"
           echo "BIN_OUT=$DST" >> $GITHUB_ENV
 
       - name: Upload binary to Release
@@ -134,6 +135,22 @@ jobs:
 
           chmod +x SPK_AP_TEMPLATE/pakiet/bin/yt-dlp
           SPK_AP_TEMPLATE/pakiet/bin/yt-dlp --version
+
+      - name: Update SPK version with build date
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          # Get current date in YYYY.MM.DD format
+          BUILD_DATE=$(date +%Y.%m.%d)
+          # Update version in INFO file
+          sed -i 's/^version=".*"/version="'${BUILD_DATE}'"/' SPK_AP_TEMPLATE/INFO
+          echo "Updated SPK version to: ${BUILD_DATE}"
+
+      - name: Make scripts executable
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          # Make all files in scripts directory executable
+          chmod +x SPK_AP_TEMPLATE/scripts/*
+          echo "Made all scripts in SPK_AP_TEMPLATE/scripts executable"
 
       - name: Build SPK package
         if: matrix.target == 'x86_64-unknown-linux-musl'

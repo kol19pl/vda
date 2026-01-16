@@ -1,5 +1,5 @@
 package="vda_serwer"
-version="1.0.0"
+version="2026.01.16"
 description="Rust yt-dlp based service with DSM UI"
 arch="apollolake avoton braswell broadwell broadwellnk broadwellnkv2 broadwellntbap bromolow cedarview denverton epyc7002 geminilake geminilakenk grantley kvmx64 purley r1000 r1000nk v1000 v1000nk"
 maintainer="Kol19pl"
