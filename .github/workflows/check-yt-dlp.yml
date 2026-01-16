@@ -1,8 +1,10 @@
+
+
 name: Auto yt-dlp update
 
 on:
   schedule:
-    - cron: "0 0 * * 1" # poniedziałek o 00:00 UTC
+    - cron: "0 0 * * 1"
   workflow_dispatch: {}
 
 jobs:
@@ -12,29 +14,23 @@ jobs:
       contents: write
 
     steps:
-      # 1. Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 2. Pobranie najnowszego release yt-dlp z GitHub
       - name: Get latest yt-dlp release tag
         id: yt
         run: |
           latest=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r .tag_name)
           echo "LATEST=$latest" >> $GITHUB_ENV
-          echo "Latest yt-dlp release: $latest"
 
-      # 3. Ustawienie nowego tagu w formacie vYYYY-MM-DD
       - name: Set new tag (vYYYY-MM-DD)
         id: new_tag
         run: |
           NEW_TAG=v$(date +'%Y-%m-%d')
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
-          echo "Nowy tag: $NEW_TAG"
 
-      # 4. Sprawdzenie, czy tag już istnieje w repo
       - name: Check if tag exists
         id: check_tag
         run: |
@@ -44,24 +40,13 @@ jobs:
           else
             echo "exists=false" >> $GITHUB_OUTPUT
 
-      # 5. Tworzenie release tylko jeśli tag nie istnieje
-      - name: Create new release
+      - name: Create new release (tag + release on GitHub)
         if: steps.check_tag.outputs.exists == 'false'
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v2
         with:
-          tag: ${{ env.NEW_TAG }}
-          name: "${{ env.NEW_TAG }}"
+          tag_name: ${{ env.NEW_TAG }}
+          name: "yt-dlp update ${{ env.NEW_TAG }}"
           body: |
             Automated update: latest yt-dlp version ${{ env.LATEST }} dla synology DSM
-          allowUpdates: true
-
-      # 6. Push tag do repo (tylko jeśli nowy release)
-      - name: Push tag to repo
-        if: steps.check_tag.outputs.exists == 'false'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag ${{ env.NEW_TAG }}
-          git push origin ${{ env.NEW_TAG }}
-
+          allow_updates: true
 

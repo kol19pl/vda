@@ -1,13 +1,13 @@
 name: Create Weekly Release with Changelog
 
 on:
-  workflow_dispatch: {}   # możliwość ręcznego uruchomienia
+  workflow_dispatch: {}    # ręczne uruchamianie
 
 jobs:
   create-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # potrzebne do tworzenia tagów i release'ów
+      contents: write   # potrzebne do tworzenia release'ów i tagów
 
     steps:
       # ========================================================
@@ -16,10 +16,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # potrzebne do generowania changeloga między tagami
+          fetch-depth: 0
 
       # ========================================================
-      # 2. Pobranie ostatniego istniejącego tagu
+      # 2. Pobranie ostatniego tagu
       # ========================================================
       - name: Get last tag
         id: last_tag
@@ -37,25 +37,19 @@ jobs:
           NEW_TAG=v$(date +'%Y-%m-%d')
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
           echo "Nowy tag: $NEW_TAG"
-          # Tworzymy tag lokalnie
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag $NEW_TAG
 
       # ========================================================
-      # 4. Wygenerowanie changeloga między ostatnim a nowym tagiem
+      # 4. Wygenerowanie changeloga
       # ========================================================
       - name: Generate Full Changelog
         id: changelog
         run: |
           if [ -n "$LAST_TAG" ]; then
-            # Pobranie commitów z hash i wiadomością
             CHANGELOG=$(git log $LAST_TAG..HEAD --pretty=format:"- %h %s")
           else
             CHANGELOG="Initial release"
           fi
 
-          # Zapisanie changeloga w bezpieczny sposób do output kroku
           {
             echo "changelog<<EOF"
             printf '%s\n' "$CHANGELOG"
@@ -63,26 +57,22 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       # ========================================================
-      # 5. Utworzenie release na GitHub z nowym tagiem i changelogiem
+      # 5. Utworzenie release i tagu na GitHub
       # ========================================================
       - name: Create new release
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v2
         with:
-          tag: ${{ env.NEW_TAG }}
-          name: "${{ env.NEW_TAG }}"
+          tag_name: ${{ env.NEW_TAG }}
+          name: "yt-dlp update ${{ env.NEW_TAG }}"
           body: |
             Automated weekly release created on $(date +'%Y-%m-%d')
 
             **Full Changelog:**
             ${{ steps.changelog.outputs.changelog }}
-          allowUpdates: true  # pozwala na aktualizację release jeśli istnieje
+          draft: false
+          prerelease: false
+          allow_updates: true
 
-      # ========================================================
-      # 6. Wypchnięcie tagu do repozytorium, aby uruchomić workflow zależny od tagów
-      # ========================================================
-      - name: Push tag to repo
-        run: |
-          git push origin ${{ env.NEW_TAG }}
 
 
 
