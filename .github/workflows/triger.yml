@@ -1,3 +1,4 @@
+
 name: Create Weekly Release with Changelog
 
 on:
@@ -29,7 +30,7 @@ jobs:
       - name: Set new tag
         id: new_tag
         run: |
-          NEW_TAG=v${{ github.run_date_format('yyyy.MM.dd') }}
+          NEW_TAG=v$(date +'%Y.%m.%d')
           echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
 
       # 4. Stworzenie Full Changelog między ostatnim a nowym tagiem
@@ -37,13 +38,11 @@ jobs:
         id: changelog
         run: |
           if [ -n "$LAST_TAG" ]; then
-            # Pobranie logu commitów między tagami
             CHANGELOG=$(git log $LAST_TAG..HEAD --pretty=format:"- %s")
           else
             CHANGELOG="Initial release"
           fi
           echo "CHANGELOG=$CHANGELOG" >> $GITHUB_ENV
-          echo "::set-output name=changelog::$CHANGELOG"
 
       # 5. Tworzenie release z tagiem i changelogiem
       - name: Create new release
@@ -52,7 +51,7 @@ jobs:
           tag: ${{ env.NEW_TAG }}
           name: "Release ${{ env.NEW_TAG }}"
           body: |
-            Automated weekly release created on ${{ github.run_date_format('yyyy.MM.dd') }}
+            Automated weekly release created on $(date +'%Y.%m.%d')
 
             **Full Changelog:**
             ${{ env.CHANGELOG }}

@@ -1,6 +1,5 @@
 name: Auto yt-dlp update
 
-# Kiedy workflow ma się uruchamiać
 on:
   schedule:
     - cron: "0 0 * * 1" # poniedziałek o 00:00 UTC
@@ -21,32 +20,28 @@ jobs:
       - name: Get latest yt-dlp release tag
         id: yt
         run: |
-          # Pobieramy najnowszy tag z repo yt-dlp
           latest=$(curl -s https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest | jq -r .tag_name)
           echo "latest=$latest" >> $GITHUB_ENV
           echo "::set-output name=tag::$latest"
-        # Po tym kroku env.latest = np. 2025.12.08
 
       # 3. Pobranie ostatniego lokalnego tagu w repo
       - name: Get last local tag
         id: last
         run: |
           git fetch --tags
-          # Pobieramy ostatni tag zaczynający się od "v" (np. v2025.12.08)
           LAST_TAG=$(git tag --list "v*" | sort -V | tail -n1 || echo "")
           echo "last=$LAST_TAG" >> $GITHUB_ENV
           echo "::set-output name=last::$LAST_TAG"
-        # Po tym kroku env.last = np. v2025.12.08
 
       # 4. Porównanie wersji
       - name: Compare versions
         id: compare
         run: |
-          # Usuwamy przedrostek 'v' z ostatniego tagu lokalnego
-          LAST_TAG_CLEAN=${{ env.last#v }}
-          echo "Comparing latest=$latest with last=$LAST_TAG_CLEAN"
-          
-          if [[ "${{ env.latest }}" == "$LAST_TAG_CLEAN" ]]; then
+          LAST=$LAST_TAG   # odczytujemy z env
+          LAST_TAG_CLEAN=${LAST#v}   # usuwamy 'v' z początku
+          echo "Comparing latest=${latest} with last=${LAST_TAG_CLEAN}"
+
+          if [[ "${latest}" == "$LAST_TAG_CLEAN" ]]; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
@@ -57,11 +52,9 @@ jobs:
         id: release
         uses: ncipollo/release-action@v1
         with:
-          # Tworzymy tag w formacie vYYYY.MM.DD (data uruchomienia workflow)
-          tag: v${{ github.run_date_format('yyyy.MM.dd') }}
-          # Nazwa release'u
-          name: "yt-dlp update v${{ github.run_date_format('yyyy.MM.dd') }}"
-          # Opis release'u
-          body: "Automated update: latest yt-dlp version ${{ env.latest }} dla synology DSM"
+          tag: v$(date +'%Y.%m.%d')
+          name: "yt-dlp update v$(date +'%Y.%m.%d')"
+          body: "Automated update: latest yt-dlp version ${latest} dla synology DSM"
+
 
 
