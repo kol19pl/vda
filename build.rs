@@ -1,6 +1,4 @@
-use std::env;
 use std::path::Path;
-use std::fs;
 use std::process::Command;
 #[cfg(target_os = "windows")]
 use winres;
@@ -123,7 +121,12 @@ Categories=Utility;",
         let icon_src = Path::new(&manifest_dir).join("src").join("icon.icns");
         let out_dir = env::var("OUT_DIR").unwrap();
         let icon_dest = Path::new(&out_dir).join("icon.icns");
-        fs::copy(icon_src, icon_dest).expect("Nie udało się skopiować ikony na macOS");
-        // Później trzeba ręcznie wskazać w Info.plist CFBundleIconFile = icon.icns
+
+        if icon_src.exists() {
+            fs::copy(icon_src, icon_dest).expect("Nie udało się skopiować ikony na macOS");
+            // Później trzeba ręcznie wskazać w Info.plist CFBundleIconFile = icon.icns
+        } else {
+            println!("cargo:warning=Plik ikony macOS (icon.icns) nie istnieje, pomijanie...");
+        }
     }
 }

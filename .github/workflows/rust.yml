@@ -1,3 +1,4 @@
+
 name: Rust Multi-Platform Release
 
 on:
@@ -120,6 +121,20 @@ jobs:
       # =========================
       # SPK – Synology (only once)
       # =========================
+      - name: Download latest yt-dlp (zipapp)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        shell: bash
+        run: |
+          echo "Downloading latest yt-dlp..."
+          mkdir -p SPK_AP_TEMPLATE/pakiet/bin
+
+          curl -L \
+            https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+            -o SPK_AP_TEMPLATE/pakiet/bin/yt-dlp
+
+          chmod +x SPK_AP_TEMPLATE/pakiet/bin/yt-dlp
+          SPK_AP_TEMPLATE/pakiet/bin/yt-dlp --version
+
       - name: Build SPK package
         if: matrix.target == 'x86_64-unknown-linux-musl'
         run: |
