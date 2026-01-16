@@ -1,7 +1,13 @@
 use std::path::Path;
-use std::process::Command;
+
 #[cfg(target_os = "windows")]
 use winres;
+
+#[cfg(not(target_os = "windows"))]
+use std::{env, fs};
+
+#[cfg(not(target_os = "macos"))]
+use std::process::Command;
 
 fn set_dynamic_version() {
     // Używamy daty w formacie YYYY-MM-DD
